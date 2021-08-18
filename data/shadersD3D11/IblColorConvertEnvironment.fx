@@ -39,7 +39,7 @@
 //                                                                                    //
 //------------------------------------------------------------------------------------//
 
-float Script : STANDARDSGLOBAL 
+float Script : STANDARDSGLOBAL
 <
     string UIWidget = "none";
     string ScriptClass = "object";
@@ -60,7 +60,7 @@ TextureCube diffuseMap : DIFFUSEMAP;
 float cameraZNear : CAMERAZNEAR;
 float cameraZFar : CAMERAZFAR;
 float textureGamma : TEXTUREGAMMA = 2.2;
-float4x4 g_mViewCM[6] : CUBEVIEWS; 
+float4x4 g_mViewCM[6] : CUBEVIEWS;
 
 float CurrentMipLevel = 0;
 float IsMDR = 0;
@@ -93,17 +93,17 @@ float3 uncharted2Tonemap(float3 x)
 {
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
- 
+
 float3 applyUnchartedToneMap( float3 texColor)
 {
    // Hardcoded Exposure Adjustment
-   //texColor *= 16; 
-    
+   //texColor *= 16;
+
    //float ExposureBias = 2.0f;
    float3 curr = uncharted2Tonemap(4.0*texColor);
-    
+
    float3 whiteScale = 1.0f/uncharted2Tonemap(W);
-   return curr*whiteScale;   
+   return curr*whiteScale;
 }
 
 
@@ -124,13 +124,13 @@ struct VertexShaderIn
 
 struct VertexShaderOut
 {
-    float4 position : SV_POSITION;  
+    float4 position : SV_POSITION;
     float3 normal : NORMAL;
 };
 
 struct PixelShaderInput
 {
-    float4 position : SV_POSITION;  
+    float4 position : SV_POSITION;
     float3 normal : NORMAL;
     uint RTIndex : SV_RenderTargetArrayIndex;
 };
@@ -144,13 +144,13 @@ VertexShaderOut vs (VertexShaderIn vertexShaderIn)
 {
     VertexShaderOut output;
     output.position = mul(vertexShaderIn.position, worldMatrix);
-    output.normal = normalize(mul(vertexShaderIn.normal, (float3x3)worldMatrix));    
+    output.normal = normalize(mul(vertexShaderIn.normal, (float3x3)worldMatrix));
 
     return output;
 }
 
 [maxvertexcount(18)]
-void gs (triangle VertexShaderOut input[3], 
+void gs (triangle VertexShaderOut input[3],
          inout TriangleStream<PixelShaderInput> outStream)
 {
     for( int f = 0; f < 6; ++f )
@@ -169,7 +169,7 @@ void gs (triangle VertexShaderOut input[3],
     }
 }
 
-PixelShaderOut ps (PixelShaderInput vertexShaderOut) 
+PixelShaderOut ps (PixelShaderInput vertexShaderOut)
 {
     float4 litColor = float4(1,1,1,1);
     PixelShaderOut output;
@@ -178,9 +178,9 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     litColor = diffuseMap.SampleLevel(anisotropicSampler, vertexShaderOut.normal.xyz, CurrentMipLevel);
 
     // Tone map if LDR.
-    if (IsMDR < 1e-6)
+    //if (IsMDR < 1e-6)
     {
-	litColor.rgb *= 1.8; 
+	//litColor.rgb *= 1.8;
 	float l = litColor.r * 0.2126 + litColor.g * 0.72152 + litColor.b * 0.0722;
 	litColor.rgb = saturate( litColor.rgb / (1.0 + l) );
 
@@ -190,11 +190,11 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     litColor.rgb = pow(litColor.rgb, 1.0f/2.2f);
 
     // Apply RGBM if requested.
-    // From notes: 
+    // From notes:
     // http://graphicrants.blogspot.com/2009/04/rgbm-color-encoding.html
     if (IsMDR > 1e-6)
     {
-       litColor = RGBMEncode(litColor.rgb);
+      // litColor = RGBMEncode(litColor.rgb);
     }
 
     output.output0.r = litColor.r;
