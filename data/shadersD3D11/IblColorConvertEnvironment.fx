@@ -169,6 +169,11 @@ void gs (triangle VertexShaderOut input[3],
     }
 }
 
+float brightness(float3 pixel)
+{
+	return dot(pixel, float3(0.299f,0.587f,0.114f));
+}
+
 PixelShaderOut ps (PixelShaderInput vertexShaderOut)
 {
     float4 litColor = float4(1,1,1,1);
@@ -176,6 +181,8 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
 
     float3 envDiffuseCoord = vertexShaderOut.normal;
     litColor = diffuseMap.SampleLevel(anisotropicSampler, vertexShaderOut.normal.xyz, CurrentMipLevel);
+
+	float3 hdrColor = litColor;
 
     // Tone map if LDR.
     //if (IsMDR < 1e-6)
@@ -188,6 +195,24 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     // Gamma correct, in both cases
     litColor.rgb = pow(litColor.rgb, 1.0f/2.2f);
 
+	// Calculate compressed value, to be stored in texture
+	float3 bitdepth = float3(5,6,5);
+	float3 range=exp2(bitdepth)-1;
+	float3 compressed_value=ceil(litColor*range)/range;
+
+	// Calculate decompressed value
+	float3 decompressed_value=pow(compressed_value,2.2f);
+	decompressed_value=decompressed_value/max(1.0-decompressed_value,0.00005); // inverse tonemap
+
+	// Store residuals
+	float residual=brightness(hdrColor)/brightness(decompressed_value); // 0..9 .. 1.1
+
+	residual=saturate((residual-0.7)/0.3);
+
+
+	litColor.rgb=compressed_value.rgb; // fake reduced bitdepth
+	litColor.a=residual;
+
     // Apply RGBM if requested.
     // From notes:
     // http://graphicrants.blogspot.com/2009/04/rgbm-color-encoding.html
@@ -195,6 +220,10 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     {
       // litColor = RGBMEncode(litColor.rgb);
     }
+
+	//litColor.rgb=0.5;
+	//if(residual<0) litColor.b=1;
+	//if(residual>1) litColor.r=1;
 
     output.output0.r = litColor.r;
     output.output0.g = litColor.g;
