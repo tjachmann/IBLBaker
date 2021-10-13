@@ -196,13 +196,15 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     litColor.rgb = pow(litColor.rgb, 1.0f/2.2f);
 
 	// Calculate compressed value, to be stored in texture
-	float3 bitdepth = float3(5,6,5);
+	float3 bitdepth = float3(5,6,5); // eg 5:6:5
 	float3 range=exp2(bitdepth)-1;
 	float3 compressed_value=ceil(litColor*range)/range;
 
 	// Calculate decompressed value
 	float3 decompressed_value=pow(compressed_value,2.2f);
 	decompressed_value=decompressed_value/max(1.0-decompressed_value,0.00005); // inverse tonemap
+
+	/// TODO potentially subtractive residuuls yield better results.
 
 	// Store residuals
 	float residual=brightness(hdrColor)/brightness(decompressed_value); // 0..9 .. 1.1
