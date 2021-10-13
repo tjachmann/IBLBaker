@@ -181,8 +181,7 @@ PixelShaderOut ps (PixelShaderInput vertexShaderOut)
     //if (IsMDR < 1e-6)
     {
 	//litColor.rgb *= 1.8;
-	float l = litColor.r * 0.2126 + litColor.g * 0.72152 + litColor.b * 0.0722;
-	litColor.rgb = saturate( litColor.rgb / (1.0 + l) );
+	litColor.rgb = saturate( litColor.rgb / (1.0 + litColor.rgb) );
 
     }
 
